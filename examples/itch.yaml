@@ -1,0 +1,29 @@
+# Variables:
+#   ITCH_USER: The itch.io user to deploy to. (required)
+#   ITCH_GAME: The itch.io game to deploy to. (required)
+#   GAME_VERSION: The version with witch to deploy the game to itch.io. If it is a file path, the version will be read from the file.
+# Secrets:
+#   BUTLER_API_KEY: The API key for butler. Required for deploying to itch.io. (required)
+name: 'Deploy to Itch.io'
+on:
+  push:
+    branches: [main]
+jobs:
+  build-game:
+    uses: WesleyClements/godot-workflows/.github/workflows/build-game@main
+    with:
+      godot-version: '4.4'
+      web-preset: 'Web'
+      windows-preset: 'Windows'
+
+  deploy-itch:
+    needs: [build-game]
+    uses: WesleyClements/godot-workflows/.github/workflows/deploy-itch.yaml@main
+    with:
+      itch-user: ${{ vars.ITCH_USER }}
+      itch-game: ${{ vars.ITCH_GAME }}
+      game-version: ${{ vars.GAME_VERSION }}
+      web-artifact-name: ${{ needs.build-game.outputs.web-artifact-name }}
+      windows-artifact-name: ${{ needs.build-game.outputs.windows-artifact-name }}
+    secrets:
+      butler-api-key: ${{ secrets.BUTLER_API_KEY }}

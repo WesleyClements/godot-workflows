@@ -1,0 +1,35 @@
+name: 'Deploy Github Pages'
+on:
+  push:
+    branches: [main]
+jobs:
+  build-game:
+    uses: WesleyClements/godot-workflows/.github/workflows/build-game.yaml@main
+    with:
+      godot-version: '4.4'
+      web-preset: 'Web'
+
+  deploy-gh-pages:
+    name: Deploy to GitHub Pages
+    needs: [build-game]
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-game.outputs.web-artifact-name }}
+          path: _site
+      - name: Upload GitHub Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
