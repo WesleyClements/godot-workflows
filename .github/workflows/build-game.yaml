@@ -55,9 +55,17 @@ jobs:
   validate-inputs:
     name: Validate Inputs
     runs-on: ${{ inputs.runner }}
+    env:
+      GODOT_VERSION: ${{ inputs.godot-version }}
+      WEB_PRESET: ${{ inputs.web-preset }}
+      WINDOWS_PRESET: ${{ inputs.windows-preset }}
     steps:
       - run: |
-          if [[ -z "${{ inputs.web-preset }}" && -z "${{ inputs.windows-preset }}" ]]; then
+          if [[ ! "$GODOT_VERSION" =~ ^[34]\.[0-5]$ ]]; then
+            echo "::error::godot-version must be 3.x or 4.x"
+            exit 1
+          fi
+          if [[ -z "$WEB_PRESET" && -z "$WINDOWS_PRESET" ]]; then
             echo "::error::web-preset or windows-preset is required"
             exit 1
           fi
