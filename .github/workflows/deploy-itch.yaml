@@ -41,8 +41,24 @@ jobs:
     runs-on: ${{ inputs.runner }}
     steps:
       - run: |
+          if [[ -z "${{ inputs.itch-user }}" ]]; then
+            echo "::error::itch-user is required"
+            exit 1
+          fi
+          if [[ -z "${{ inputs.itch-game }}" ]]; then
+            echo "::error::itch-game is required"
+            exit 1
+          fi
           if [[ -z "${{ inputs.web-artifact-name }}" && -z "${{ inputs.windows-artifact-name }}" ]]; then
             echo "::error::web-artifact-name or windows-artifact-name is required"
+            exit 1
+          fi
+          if [[ -n "${{ inputs.web-artifact-name }}" && -z "${{ inputs.web-channel }}" ]]; then
+            echo "::error::web-channel is required"
+            exit 1
+          fi
+          if [[ -n "${{ inputs.windows-artifact-name }}" && -z "${{ inputs.windows-channel }}" ]]; then
+            echo "::error::windows-channel is required"
             exit 1
           fi
           if [[ -z "${{ secrets.butler-api-key }}" ]]; then
