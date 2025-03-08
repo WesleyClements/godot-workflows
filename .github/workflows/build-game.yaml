@@ -4,12 +4,12 @@ on:
     inputs:
       runner:
         type: string
-        description: 'The runner to use for the build. Must be linux.'
+        description: 'The linux runner to when building the game'
         required: false
         default: 'ubuntu-latest'
       godot-version:
         type: string
-        description: 'The version of Godot Engine to use.'
+        description: 'Godot version to use. Should be of the form `3.x` or `4.x`.'
         required: false
         default: '4.4'
       web-preset:
@@ -23,7 +23,7 @@ on:
         default: 'index.html'
       web-artifact-name:
         type: string
-        description: 'The name of the artifact for web exports.'
+        description: 'The name to use when uploading web build artifact'
         required: false
         default: 'web-export'
       windows-preset:
@@ -42,10 +42,10 @@ on:
         default: 'windows-export'
     outputs:
       web-artifact-name:
-        description: 'The name of the artifact for web exports.'
+        description: 'The name of the artifact containing the web build or an `''` if no artifact was uploaded'
         value: ${{ inputs.web-preset != '' && inputs.web-artifact-name || '' }}
       windows-artifact-name:
-        description: 'The name of the artifact for windows exports.'
+        description: 'The name of the artifact containing the Windows build or an `''` if no artifact was uploaded'
         value: ${{ inputs.windows-preset != '' && inputs.windows-artifact-name || '' }}
 
 env:

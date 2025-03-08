@@ -4,16 +4,16 @@ on:
     inputs:
       runner:
         type: string
-        description: 'The runner to use for the build. Must be linux.'
+        description: 'The linux runner to when deploying to itch.io'
         required: false
         default: 'ubuntu-latest'
       itch-user:
         type: string
-        description: 'The itch user to deploy to.'
+        description: 'The itch.io username of the owner of the game'
         required: true
       itch-game:
         type: string
-        description: 'The itch game to deploy to.'
+        description: 'The name of the itch.io game (as entered in the Project URL)'
         required: true
       game-version:
         type: string
@@ -21,21 +21,21 @@ on:
         required: false
       web-channel:
         type: string
-        description: 'The itch.io channel to use for web exports.'
+        description: 'The itch.io upload channel to use for web exports.'
         required: false
         default: 'web'
       web-artifact-name:
         type: string
-        description: 'The name of the artifact for web exports.'
+        description: 'Name of the web build artifact.'
         required: false
       windows-channel:
         type: string
-        description: 'The itch.io channel to use for windows exports.'
+        description: 'The itch.io upload channel to use for Windows exports.'
         required: false
         default: 'windows'
       windows-artifact-name:
         type: string
-        description: 'The name of the artifact for windows exports.'
+        description: 'Name of the Windows build artifact.'
         required: false
     secrets:
       butler-api-key:
