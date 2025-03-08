@@ -51,4 +51,4 @@ Deploys your game to itch.io.
 **Secrets:**
 | Secret | Required? | Description |
 |--------|-----------|-------------|
-| `butler-api-key` | Yes | Your itch.io Butler API key |
+| `butler-api-key` | Yes | Your itch.io Butler API key. Walkthrough for attaining this [here](https://itch.io/docs/butler/login.html#running-butler-from-ci-builds-travis-ci-gitlab-ci-etc). |
