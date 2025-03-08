@@ -101,13 +101,15 @@ jobs:
       BUTLER_API_KEY: ${{ secrets.butler-api-key }}
     strategy:
       matrix:
-        artifact:
-          - name: ${{ inputs.web-artifact-name }}
-            path: build/${{ inputs.web-artifact-name }}
-            channel: ${{ inputs.web-channel }}
-          - name: ${{ inputs.windows-artifact-name }}
-            path: build/${{ inputs.windows-artifact-name }}
-            channel: ${{ inputs.windows-channel }}
+        platform:
+          - channel: ${{ inputs.web-channel }}
+            artifact:
+              name: ${{ inputs.web-artifact-name }}
+              path: build/${{ inputs.web-artifact-name }}
+          - channel: ${{ inputs.windows-channel }}
+            artifact:
+              name: ${{ inputs.windows-artifact-name }}
+              path: build/${{ inputs.windows-artifact-name }}
         exclude:
           - artifact:
               name: ''
@@ -119,8 +121,8 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.artifact.name }}
-          path: ${{ matrix.artifact.path }}
+          name: ${{ matrix.platform.artifact.name }}
+          path: ${{ matrix.platform.artifact.path }}
       - name: Restore Butler Cache
         uses: actions/cache/restore@v4
         with:
@@ -130,10 +132,10 @@ jobs:
       - name: Deploy
         env:
           GAME_VERSION: ${{ inputs.game-version }}
-          BUILD_PATH: ${{ matrix.artifact.path }}
+          BUILD_PATH: ${{ matrix.platform.artifact.path }}
           ITCH_USER: ${{ inputs.itch-user }}
           ITCH_GAME: ${{ inputs.itch-game }}
-          ITCH_CHANNEL: ${{ matrix.artifact.channel }}
+          ITCH_CHANNEL: ${{ matrix.platform.channel }}
         run: |-
           SEMVER_REGEX="^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
           if [[ -f $GAME_VERSION ]]; then
