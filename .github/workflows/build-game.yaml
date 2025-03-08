@@ -5,12 +5,12 @@ on:
       runner:
         type: string
         description: 'The runner to use for the build. Must be linux.'
-        required: true
+        required: false
         default: 'ubuntu-latest'
       godot-version:
         type: string
         description: 'The version of Godot Engine to use.'
-        required: true
+        required: false
         default: '4.4'
       web-preset:
         type: string
