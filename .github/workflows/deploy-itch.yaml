@@ -117,8 +117,9 @@ jobs:
               name: ${{ inputs.windows-artifact-name }}
               path: build/${{ inputs.windows-artifact-name }}
         exclude:
-          - artifact:
-              name: ''
+          - platform:
+              artifact:
+                name: ''
     steps:
       - name: Checkout
         uses: actions/checkout@v4
