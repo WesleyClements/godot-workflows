@@ -1,0 +1,214 @@
+name: 'Build Game'
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'The runner to use for the build. Must be linux.'
+        required: true
+        default: 'ubuntu-latest'
+      godot-version:
+        description: 'The version of Godot Engine to use.'
+        required: true
+        default: '4.4'
+      web-preset:
+        description: 'The export preset to use for web exports.'
+        required: false
+      web-export-name:
+        description: 'The name of the exported file for web exports.'
+        required: false
+        default: 'index.html'
+      web-artifact-name:
+        description: 'The name of the artifact for web exports.'
+        required: false
+        default: 'web-export'
+      windows-preset:
+        description: 'The export preset to use for windows exports.'
+        required: false
+      windows-export-name:
+        description: 'The name of the exported file for windows exports.'
+        required: false
+        default: 'game.exe'
+      windows-artifact-name:
+        description: 'The name of the artifact for windows exports.'
+        required: false
+        default: 'windows-export'
+    outputs:
+      web-artifact-name:
+        value: ${{ inputs.web-preset != '' && inputs.web-artifact-name || '' }}
+      windows-artifact-name:
+        value: ${{ inputs.windows-preset != '' && inputs.windows-export-name || '' }}
+
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
+jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - run: |
+          if [[ -z "${{ inputs.web-preset }}" && -z "${{ inputs.windows-preset }}" ]]; then
+            echo "::error::web-preset or windows-preset is required"
+            exit 1
+          fi
+
+  cache-engine:
+    name: Cache Godot Engine
+    if: >
+      inputs.web-preset != '' ||
+      inputs.windows-preset != ''
+    runs-on: ${{ inputs.runner }}
+    env:
+      GODOT_EXECUTABLE_PATH: ./godot_stable_linux.x86_64
+      WEB_TEMPLATE_PATHS: |-
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/web_dlink_nothreads_release.zip
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/web_dlink_release.zip
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/web_nothreads_release.zip
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/web_release.zip
+      WINDOWS_TEMPLATE_PATHS: |-
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/windows_release_arm64.exe
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/windows_release_arm64_console.exe
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/windows_release_x86_32.exe
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/windows_release_x86_32_console.exe
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/windows_release_x86_64.exe
+        ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/windows_release_x86_64_console.exe
+    outputs:
+      engine-cache-key: ${{ steps.restore-engine-cache.outputs.cache-primary-key }}
+      godot-executable-path: ${{ env.GODOT_EXECUTABLE_PATH }}
+      web-template-cache-key: ${{ steps.restore-web-template-cache.outputs.cache-primary-key }}
+      web-template-paths: ${{ env.WEB_TEMPLATE_PATHS }}
+      windows-template-cache-key: ${{ steps.restore-windows-template-cache.outputs.cache-primary-key }}
+      windows-template-paths: ${{ env.WINDOWS_TEMPLATE_PATHS }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+      - name: Restore Engine Cache
+        id: restore-engine-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.GODOT_EXECUTABLE_PATH }}
+          key: ${{ runner.os }}-godot-${{ inputs.godot-version }}-engine
+          lookup-only: true
+      - name: Download Godot
+        if: ${{ steps.restore-engine-cache.outputs.cache-hit != 'true' }}
+        id: download-godot
+        uses: ./.github/actions/download-godot
+        with:
+          version: ${{ inputs.godot-version }}
+          executable-path: ${{ env.GODOT_EXECUTABLE_PATH }}
+      - name: Save Engine Cache
+        if: ${{ steps.restore-engine-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.GODOT_EXECUTABLE_PATH }}
+          key: ${{ steps.restore-engine-cache.outputs.cache-primary-key }}
+
+      - name: Restore Web Export Templates Cache
+        if: ${{ inputs.web-preset != '' }}
+        id: restore-web-template-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.WEB_TEMPLATE_PATHS }}
+          key: ${{ runner.os }}-godot-${{ inputs.godot-version }}-web-export-templates
+          lookup-only: true
+      - name: Restore Windows Export Templates Cache
+        if: ${{ inputs.windows-preset != '' }}
+        id: restore-windows-template-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.WINDOWS_TEMPLATE_PATHS }}
+          key: ${{ runner.os }}-godot-${{ inputs.godot-version }}-windows-export-templates
+          lookup-only: true
+
+      - name: Download Godot Export Templates
+        if: >
+          ( steps.restore-web-template-cache.outputs.cache-hit != 'true' && inputs.web-preset != '' ) ||
+          ( steps.restore-windows-template-cache.outputs.cache-hit != 'true' && inputs.windows-preset != '' )
+        uses: ./.github/actions/download-godot-export-templates
+        with:
+          version: ${{ inputs.godot-version }}
+
+      - name: Save Web Export Templates Cache
+        if: ${{ steps.restore-web-template-cache.outputs.cache-hit != 'true' && inputs.web-preset != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.WEB_TEMPLATE_PATHS }}
+          key: ${{ steps.restore-web-template-cache.outputs.cache-primary-key }}
+      - name: Save Windows Export Templates Cache
+        if: ${{ steps.restore-windows-template-cache.outputs.cache-hit != 'true' && inputs.windows-preset != '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.WINDOWS_TEMPLATE_PATHS }}
+          key: ${{ steps.restore-windows-template-cache.outputs.cache-primary-key }}
+
+  export-web:
+    name: Web Export
+    needs: [cache-engine]
+    if: inputs.web-preset != ''
+    runs-on: ${{ inputs.runner }}
+    env:
+      GODOT_PATH: ${{ needs.cache-engine.outputs.godot-executable-path }}
+      EXPORT_PATH: build/web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+      - name: Restore Engine Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.GODOT_PATH }}
+          key: ${{ needs.cache-engine.outputs.engine-cache-key }}
+          fail-on-cache-miss: true
+      - name: Restore Web Export Templates Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ needs.cache-engine.outputs.web-template-paths }}
+          key: ${{ needs.cache-engine.outputs.web-template-cache-key }}
+          fail-on-cache-miss: true
+      - name: Export
+        run: |-
+          mkdir -v -p ${{ env.EXPORT_PATH }}
+          $GODOT_PATH --headless --verbose --export-release "${{ inputs.web-preset }}" ${{ env.EXPORT_PATH }}/${{ inputs.web-export-name }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.web-artifact-name }}
+          path: ${{ env.EXPORT_PATH }}
+
+  export-windows:
+    name: Windows Export
+    needs: [cache-engine]
+    if: inputs.windows-preset != ''
+    runs-on: ${{ inputs.runner }}
+    env:
+      GODOT_PATH: ${{ needs.cache-engine.outputs.godot-executable-path }}
+      EXPORT_PATH: build/windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+      - name: Restore Engine Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.GODOT_PATH }}
+          key: ${{ needs.cache-engine.outputs.engine-cache-key }}
+          fail-on-cache-miss: true
+      - name: Restore Windows Export Templates Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ needs.cache-engine.outputs.windows-template-paths }}
+          key: ${{ needs.cache-engine.outputs.windows-template-cache-key }}
+          fail-on-cache-miss: true
+      - name: Export
+        run: |-
+          mkdir -v -p ${{ env.EXPORT_PATH }}
+          $GODOT_PATH --headless --verbose --export-release "${{ inputs.windows-preset }}" ${{ env.EXPORT_PATH }}/${{ inputs.windows-export-name }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.windows-artifact-name }}
+          path: ${{ env.EXPORT_PATH }}

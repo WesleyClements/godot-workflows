@@ -1,0 +1,23 @@
+name: 'Download Godot'
+description: 'Download Godot'
+inputs:
+  version:
+    description: 'Version of godot to download'
+    required: true
+    default: '4.4'
+runs:
+  using: 'composite'
+  steps:
+    - name: Download Godot Templates
+      uses: robinraju/release-downloader@v1
+      with:
+        repository: godotengine/godot
+        tag: ${{ inputs.version }}-stable
+        filename: Godot_v${{ inputs.version }}-stable_export_templates.tpz
+    - name: Extract Godot Templates
+      shell: bash
+      env:
+        OUTPUT_DIR: ~/.local/share/godot/export_templates/${{ inputs.version }}.stable
+      run: |
+        mkdir -p ${{ env.OUTPUT_DIR }}
+        unzip -j Godot_v${{ inputs.version }}-stable_export_templates.tpz templates/* -d ${{ env.OUTPUT_DIR }}

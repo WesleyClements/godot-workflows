@@ -1,0 +1,138 @@
+name: 'Deploy to Itch.io'
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'The runner to use for the build. Must be linux.'
+        required: false
+        default: 'ubuntu-latest'
+      itch-user:
+        description: 'The itch user to deploy to.'
+        required: true
+      itch-game:
+        description: 'The itch game to deploy to.'
+        required: true
+      game-version:
+        description: 'The version of the game to deploy. Can be a version number or a file path.'
+        required: false
+      web-channel:
+        description: 'The itch.io channel to use for web exports.'
+        required: false
+        default: 'web'
+      web-artifact-name:
+        description: 'The name of the artifact for web exports.'
+        required: false
+      windows-channel:
+        description: 'The itch.io channel to use for windows exports.'
+        required: false
+        default: 'windows'
+      windows-artifact-name:
+        description: 'The name of the artifact for windows exports.'
+        required: false
+    secrets:
+      butler-api-key:
+        description: 'The API key for butler. Required for deploying to itch.io.'
+        required: true
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+jobs:
+  validate-inputs:
+    name: Validate Inputs
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - run: |
+          if [[ -z "${{ inputs.web-artifact-name }}" && -z "${{ inputs.windows-artifact-name }}" ]]; then
+            echo "::error::web-artifact-name or windows-artifact-name is required"
+            exit 1
+          fi
+          if [[ -z "${{ secrets.butler-api-key }}" ]]; then
+            echo "::error::butler-api-key is required"
+            exit 1
+          fi
+
+  cache-butler:
+    name: Cache butler
+    needs: [validate-inputs]
+    runs-on: ${{ inputs.runner }}
+    outputs:
+      butler-cache-key: ${{ steps.restore-butler-cache.outputs.cache-primary-key }}
+    steps:
+      - name: Restore Butler Cache
+        id: restore-butler-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ./butler
+          key: ${{ runner.os }}-butler
+          lookup-only: true
+      - name: Download butler
+        if: ${{ steps.restore-butler-cache.outputs.cache-hit != 'true' }}
+        run: |-
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+      - name: Save Butler Cache
+        if: ${{ steps.restore-butler-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ./butler
+          key: ${{ steps.restore-butler-cache.outputs.cache-primary-key }}
+
+  deploy-to-itch:
+    name: Deploy to itch.io
+    needs: [cache-butler]
+    runs-on: ${{ inputs.runner }}
+    env:
+      BUTLER_API_KEY: ${{ secrets.butler-api-key }}
+    strategy:
+      matrix:
+        artifact:
+          - name: ${{ inputs.web-artifact-name }}
+            path: build/${{ inputs.web-artifact-name }}
+            channel: ${{ inputs.web-channel }}
+          - name: ${{ inputs.windows-artifact-name }}
+            path: build/${{ inputs.windows-artifact-name }}
+            channel: ${{ inputs.windows-channel }}
+        exclude:
+          - artifact:
+              name: ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact.name }}
+          path: ${{ matrix.artifact.path }}
+      - name: Restore Butler Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ./butler
+          key: ${{ needs.cache-butler.outputs.butler-cache-key }}
+          fail-on-cache-miss: true
+      - name: Deploy
+        env:
+          GAME_VERSION: ${{ inputs.game-version }}
+          BUILD_PATH: ${{ matrix.artifact.path }}
+          ITCH_USER: ${{ inputs.itch-user }}
+          ITCH_GAME: ${{ inputs.itch-game }}
+          ITCH_CHANNEL: ${{ matrix.artifact.channel }}
+        run: |-
+          SEMVER_REGEX="^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
+          if [[ -f $GAME_VERSION ]]; then
+            VERSION_FLAG="--userversion-file $GAME_VERSION"
+            echo "Deploying with version file $GAME_VERSION: $(cat $GAME_VERSION)"
+          elif [[ -n "$GAME_VERSION" ]]; then
+            if [[ $GAME_VERSION =~ $SEMVER_REGEX ]]; then
+              VERSION_FLAG="--userversion $GAME_VERSION"
+              echo "Deploying with version $GAME_VERSION"
+            else
+              echo "::error::ITCH_VERSION should be a valid version number"
+              exit 1
+            fi
+          else
+            VERSION_FLAG=""
+            echo "Deploying with incremental versioning"
+          fi
+          ./butler push $BUILD_PATH $ITCH_USER/$ITCH_GAME:$ITCH_CHANNEL $VERSION_FLAG
