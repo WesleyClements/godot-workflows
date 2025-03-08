@@ -46,7 +46,7 @@ on:
         value: ${{ inputs.web-preset != '' && inputs.web-artifact-name || '' }}
       windows-artifact-name:
         description: 'The name of the artifact for windows exports.'
-        value: ${{ inputs.windows-preset != '' && inputs.windows-export-name || '' }}
+        value: ${{ inputs.windows-preset != '' && inputs.windows-artifact-name || '' }}
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
