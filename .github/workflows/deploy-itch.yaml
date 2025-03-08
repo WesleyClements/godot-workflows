@@ -47,29 +47,27 @@ jobs:
   validate-inputs:
     name: Validate Inputs
     runs-on: ${{ inputs.runner }}
+    env:
+      WEB_ARTIFACT_NAME: ${{ inputs.web-artifact-name }}
+      WEB_CHANNEL: ${{ inputs.web-channel }}
+      WINDOWS_ARTIFACT_NAME: ${{ inputs.windows-artifact-name }}
+      WINDOWS_CHANNEL: ${{ inputs.windows-channel }}
+      BUTLER_API_KEY: ${{ secrets.butler-api-key }}
     steps:
       - run: |
-          if [[ -z "${{ inputs.itch-user }}" ]]; then
-            echo "::error::itch-user is required"
-            exit 1
-          fi
-          if [[ -z "${{ inputs.itch-game }}" ]]; then
-            echo "::error::itch-game is required"
-            exit 1
-          fi
-          if [[ -z "${{ inputs.web-artifact-name }}" && -z "${{ inputs.windows-artifact-name }}" ]]; then
+          if [[ -z "$WEB_ARTIFACT_NAME" && -z "$WINDOWS_ARTIFACT_NAME" ]]; then
             echo "::error::web-artifact-name or windows-artifact-name is required"
             exit 1
           fi
-          if [[ -n "${{ inputs.web-artifact-name }}" && -z "${{ inputs.web-channel }}" ]]; then
+          if [[ -n "$WEB_ARTIFACT_NAME" && -z "$WEB_CHANNEL" ]]; then
             echo "::error::web-channel is required"
             exit 1
           fi
-          if [[ -n "${{ inputs.windows-artifact-name }}" && -z "${{ inputs.windows-channel }}" ]]; then
+          if [[ -n "$WINDOWS_ARTIFACT_NAME" && -z "$WINDOWS_CHANNEL" ]]; then
             echo "::error::windows-channel is required"
             exit 1
           fi
-          if [[ -z "${{ secrets.butler-api-key }}" ]]; then
+          if [[ -z "$BUTLER_API_KEY" ]]; then
             echo "::error::butler-api-key is required"
             exit 1
           fi
