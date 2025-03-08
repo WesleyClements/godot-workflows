@@ -72,9 +72,7 @@ jobs:
 
   cache-engine:
     name: Cache Godot Engine
-    if: >
-      inputs.web-preset != '' ||
-      inputs.windows-preset != ''
+    needs: [validate-inputs]
     runs-on: ${{ inputs.runner }}
     env:
       GODOT_EXECUTABLE_PATH: ./godot_stable_linux.x86_64
