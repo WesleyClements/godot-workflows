@@ -3,39 +3,49 @@ on:
   workflow_call:
     inputs:
       runner:
+        type: string
         description: 'The runner to use for the build. Must be linux.'
         required: true
         default: 'ubuntu-latest'
       godot-version:
+        type: string
         description: 'The version of Godot Engine to use.'
         required: true
         default: '4.4'
       web-preset:
+        type: string
         description: 'The export preset to use for web exports.'
         required: false
       web-export-name:
+        type: string
         description: 'The name of the exported file for web exports.'
         required: false
         default: 'index.html'
       web-artifact-name:
+        type: string
         description: 'The name of the artifact for web exports.'
         required: false
         default: 'web-export'
       windows-preset:
+        type: string
         description: 'The export preset to use for windows exports.'
         required: false
       windows-export-name:
+        type: string
         description: 'The name of the exported file for windows exports.'
         required: false
         default: 'game.exe'
       windows-artifact-name:
+        type: string
         description: 'The name of the artifact for windows exports.'
         required: false
         default: 'windows-export'
     outputs:
       web-artifact-name:
+        description: 'The name of the artifact for web exports.'
         value: ${{ inputs.web-preset != '' && inputs.web-artifact-name || '' }}
       windows-artifact-name:
+        description: 'The name of the artifact for windows exports.'
         value: ${{ inputs.windows-preset != '' && inputs.windows-export-name || '' }}
 
 env:
