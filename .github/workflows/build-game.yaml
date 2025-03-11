@@ -110,7 +110,7 @@ jobs:
       - name: Download Godot
         if: ${{ steps.restore-engine-cache.outputs.cache-hit != 'true' }}
         id: download-godot
-        uses: WesleyClements/godot-workflows/.github/actions/download-godot
+        uses: WesleyClements/godot-workflows/.github/actions/download-godot@main
         with:
           version: ${{ inputs.godot-version }}
           executable-path: ${{ env.GODOT_EXECUTABLE_PATH }}
@@ -142,7 +142,7 @@ jobs:
         if: >
           ( steps.restore-web-template-cache.outputs.cache-hit != 'true' && inputs.web-preset != '' ) ||
           ( steps.restore-windows-template-cache.outputs.cache-hit != 'true' && inputs.windows-preset != '' )
-        uses: WesleyClements/godot-workflows/.github/actions/download-godot-export-templates
+        uses: WesleyClements/godot-workflows/.github/actions/download-godot-export-templates@main
         with:
           version: ${{ inputs.godot-version }}
 
