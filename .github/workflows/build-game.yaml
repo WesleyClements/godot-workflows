@@ -186,12 +186,9 @@ jobs:
           fail-on-cache-miss: true
       - name: Inject Godot Config
         run: |
-          touch override.cfg
-          cat >> override.cfg << EOM
-          [git]
-          branch="${{ env.BRANCH_NAME }}"
-          commit="${{ github.sha }}"
-          EOM
+          echo $'\n[git]' >> override.cfg
+          echo 'branch="${{ env.BRANCH_NAME }}"' >> override.cfg
+          echo 'commit="${{ github.sha }}"' >> override.cfg
       - name: Export
         run: |-
           mkdir -v -p ${{ env.EXPORT_PATH }}
@@ -229,12 +226,9 @@ jobs:
           fail-on-cache-miss: true
       - name: Inject Godot Config
         run: |
-          touch override.cfg
-          cat >> override.cfg << EOM
-          [git]
-          branch="${{ env.BRANCH_NAME }}"
-          commit="${{ github.sha }}"
-          EOM
+          echo $'\n[git]' >> override.cfg
+          echo 'branch="${{ env.BRANCH_NAME }}"' >> override.cfg
+          echo 'commit="${{ github.sha }}"' >> override.cfg
       - name: Export
         run: |-
           mkdir -v -p ${{ env.EXPORT_PATH }}
