@@ -159,54 +159,35 @@ jobs:
           path: ${{ env.WINDOWS_TEMPLATE_PATHS }}
           key: ${{ steps.restore-windows-template-cache.outputs.cache-primary-key }}
 
-  export-web:
-    name: Web Export
+  export:
+    name: Export Game
     needs: [cache-engine]
-    if: inputs.web-preset != ''
-    runs-on: ${{ inputs.runner }}
+    runs-on: ${{ matrix.export.runner }}
     env:
       GODOT_PATH: ${{ needs.cache-engine.outputs.godot-executable-path }}
-      EXPORT_PATH: build/web
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.BRANCH_NAME }}
-      - name: Restore Engine Cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ env.GODOT_PATH }}
-          key: ${{ needs.cache-engine.outputs.engine-cache-key }}
-          fail-on-cache-miss: true
-      - name: Restore Web Export Templates Cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ needs.cache-engine.outputs.web-template-paths }}
-          key: ${{ needs.cache-engine.outputs.web-template-cache-key }}
-          fail-on-cache-miss: true
-      - name: Inject Godot Config
-        run: |
-          echo $'\n[github_workflow]' >> project.godot
-          echo 'branch="${{ env.BRANCH_NAME }}"' >> project.godot
-          echo 'commit="${{ github.sha }}"' >> project.godot
-      - name: Export
-        run: |-
-          mkdir -v -p ${{ env.EXPORT_PATH }}
-          $GODOT_PATH --headless --verbose --export-release "${{ inputs.web-preset }}" ${{ env.EXPORT_PATH }}/${{ inputs.web-export-name }}
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ inputs.web-artifact-name }}
-          path: ${{ env.EXPORT_PATH }}
+    strategy:
+      matrix:
+        export:
+          - name: Web
+            runner: ${{ inputs.runner }}
+            preset: ${{ inputs.web-preset }}
+            path: build/web
+            file-name: ${{ inputs.web-export-name }}
+            artifact-name: ${{ inputs.web-artifact-name }}
+            templates-paths: ${{ needs.cache-engine.outputs.web-template-paths }}
+            templates-cache-key: ${{ needs.cache-engine.outputs.web-template-cache-key }}
+          - name: Windows
+            runner: ${{ inputs.runner }}
+            preset: ${{ inputs.windows-preset }}
+            path: build/windows
+            file-name: ${{ inputs.windows-export-name }}
+            artifact-name: ${{ inputs.windows-artifact-name }}
+            templates-paths: ${{ needs.cache-engine.outputs.windows-template-paths }}
+            templates-cache-key: ${{ needs.cache-engine.outputs.windows-template-cache-key }}
+        exclude:
+          - export:
+              preset: ''
 
-  export-windows:
-    name: Windows Export
-    needs: [cache-engine]
-    if: inputs.windows-preset != ''
-    runs-on: ${{ inputs.runner }}
-    env:
-      GODOT_PATH: ${{ needs.cache-engine.outputs.godot-executable-path }}
-      EXPORT_PATH: build/windows
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -218,23 +199,23 @@ jobs:
           path: ${{ env.GODOT_PATH }}
           key: ${{ needs.cache-engine.outputs.engine-cache-key }}
           fail-on-cache-miss: true
-      - name: Restore Windows Export Templates Cache
+      - name: Restore ${{ matrix.export.name }} Export Templates Cache
         uses: actions/cache/restore@v4
         with:
-          path: ${{ needs.cache-engine.outputs.windows-template-paths }}
-          key: ${{ needs.cache-engine.outputs.windows-template-cache-key }}
+          path: ${{ matrix.export.templates-paths }}
+          key: ${{ matrix.export.templates-cache-key }}
           fail-on-cache-miss: true
       - name: Inject Godot Config
         run: |
-          echo $'\n[github_workflow]' >> project.godot
-          echo 'branch="${{ env.BRANCH_NAME }}"' >> project.godot
-          echo 'commit="${{ github.sha }}"' >> project.godot
-      - name: Export
+          echo $'\n[github_workflow]' >> override.cfg
+          echo 'branch="${{ env.BRANCH_NAME }}"' >> override.cfg
+          echo 'commit="${{ github.sha }}"' >> override.cfg
+      - name: Export ${{ matrix.export.name }}
         run: |-
-          mkdir -v -p ${{ env.EXPORT_PATH }}
-          $GODOT_PATH --headless --verbose --export-release "${{ inputs.windows-preset }}" ${{ env.EXPORT_PATH }}/${{ inputs.windows-export-name }}
-      - name: Upload Artifact
+          mkdir -v -p ${{ matrix.export.path }}
+          $GODOT_PATH --headless --verbose --export-release "${{ matrix.export.preset }}" ${{ matrix.export.path }}/${{ matrix.export.file-name }}
+      - name: Upload ${{ matrix.export.name }} Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.windows-artifact-name }}
-          path: ${{ env.EXPORT_PATH }}
+          name: ${{ matrix.export.artifact-name }}
+          path: ${{ matrix.export.path }}
