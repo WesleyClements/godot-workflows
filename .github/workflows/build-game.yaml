@@ -184,8 +184,8 @@ jobs:
           path: ${{ needs.cache-engine.outputs.web-template-paths }}
           key: ${{ needs.cache-engine.outputs.web-template-cache-key }}
           fail-on-cache-miss: true
-      - name: Inject Git Config
-        run: |-
+      - name: Inject Godot Config
+        run: |
           touch override.cfg
           cat >> override.cfg << EOM
           [git]
@@ -227,8 +227,8 @@ jobs:
           path: ${{ needs.cache-engine.outputs.windows-template-paths }}
           key: ${{ needs.cache-engine.outputs.windows-template-cache-key }}
           fail-on-cache-miss: true
-      - name: Inject Git Config
-        run: |-
+      - name: Inject Godot Config
+        run: |
           touch override.cfg
           cat >> override.cfg << EOM
           [git]
