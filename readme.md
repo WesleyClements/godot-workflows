@@ -20,6 +20,7 @@ Builds your Godot game for specified platforms.
 | `windows-preset` | string | No | | The export preset to use for windows exports. |
 | `windows-export-name` | string | No | `game.exe` | The name of the exported file for windows exports. |
 | `windows-artifact-name` | string | No | `windows-export` | The name to use when uploading Windows build artifact |
+| `inject-godot-config` | boolean | No | `false` | Whether to inject the branch and commit into the project.godot file |
 
 At least one of `web-preset` or `windows-preset` must be provided.
 

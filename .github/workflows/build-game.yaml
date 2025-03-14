@@ -40,6 +40,11 @@ on:
         description: 'The name of the artifact for windows exports.'
         required: false
         default: 'windows-export'
+      inject-godot-config:
+        type: boolean
+        description: 'Whether to inject the branch and commit into the project.godot file'
+        required: false
+        default: false
     outputs:
       web-artifact-name:
         description: "The name of the artifact containing the web build or an `'` if no artifact was uploaded"
@@ -206,6 +211,7 @@ jobs:
           key: ${{ matrix.export.templates-cache-key }}
           fail-on-cache-miss: true
       - name: Inject Godot Config
+        if: ${{ inputs.inject-godot-config == 'true' }}
         run: |
           echo $'\n[github_workflow]' >> override.cfg
           echo 'branch="${{ env.BRANCH_NAME }}"' >> override.cfg
