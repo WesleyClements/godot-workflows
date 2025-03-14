@@ -42,10 +42,10 @@ on:
         default: 'windows-export'
     outputs:
       web-artifact-name:
-        description: 'The name of the artifact containing the web build or an `''` if no artifact was uploaded'
+        description: "The name of the artifact containing the web build or an `'` if no artifact was uploaded"
         value: ${{ inputs.web-preset != '' && inputs.web-artifact-name || '' }}
       windows-artifact-name:
-        description: 'The name of the artifact containing the Windows build or an `''` if no artifact was uploaded'
+        description: "The name of the artifact containing the Windows build or an `'` if no artifact was uploaded"
         value: ${{ inputs.windows-preset != '' && inputs.windows-artifact-name || '' }}
 
 env:
@@ -184,6 +184,14 @@ jobs:
           path: ${{ needs.cache-engine.outputs.web-template-paths }}
           key: ${{ needs.cache-engine.outputs.web-template-cache-key }}
           fail-on-cache-miss: true
+      - name: Inject Git Config
+        run: |-
+          touch override.cfg
+          echo "
+          [git]
+
+          branch=\"${{ env.BRANCH_NAME }}\"
+          commit=\"${{ github.sha }}\"" >> override.cfg"
       - name: Export
         run: |-
           mkdir -v -p ${{ env.EXPORT_PATH }}
@@ -219,6 +227,14 @@ jobs:
           path: ${{ needs.cache-engine.outputs.windows-template-paths }}
           key: ${{ needs.cache-engine.outputs.windows-template-cache-key }}
           fail-on-cache-miss: true
+      - name: Inject Git Config
+        run: |-
+          touch override.cfg
+          echo "
+          [git]
+
+          branch=\"${{ env.BRANCH_NAME }}\"
+          commit=\"${{ github.sha }}\"" >> override.cfg"
       - name: Export
         run: |-
           mkdir -v -p ${{ env.EXPORT_PATH }}
