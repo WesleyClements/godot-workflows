@@ -186,9 +186,9 @@ jobs:
           fail-on-cache-miss: true
       - name: Inject Godot Config
         run: |
-          echo $'\n[git]' >> override.cfg
-          echo 'branch="${{ env.BRANCH_NAME }}"' >> override.cfg
-          echo 'commit="${{ github.sha }}"' >> override.cfg
+          echo $'\n[github_workflow]' >> project.godot
+          echo 'branch="${{ env.BRANCH_NAME }}"' >> project.godot
+          echo 'commit="${{ github.sha }}"' >> project.godot
       - name: Export
         run: |-
           mkdir -v -p ${{ env.EXPORT_PATH }}
@@ -226,9 +226,9 @@ jobs:
           fail-on-cache-miss: true
       - name: Inject Godot Config
         run: |
-          echo $'\n[git]' >> override.cfg
-          echo 'branch="${{ env.BRANCH_NAME }}"' >> override.cfg
-          echo 'commit="${{ github.sha }}"' >> override.cfg
+          echo $'\n[github_workflow]' >> project.godot
+          echo 'branch="${{ env.BRANCH_NAME }}"' >> project.godot
+          echo 'commit="${{ github.sha }}"' >> project.godot
       - name: Export
         run: |-
           mkdir -v -p ${{ env.EXPORT_PATH }}
