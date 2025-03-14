@@ -187,11 +187,11 @@ jobs:
       - name: Inject Git Config
         run: |-
           touch override.cfg
-          echo "
+          cat >> override.cfg << EOM
           [git]
-
-          branch=\"${{ env.BRANCH_NAME }}\"
-          commit=\"${{ github.sha }}\"" >> override.cfg"
+          branch="${{ env.BRANCH_NAME }}"
+          commit="${{ github.sha }}"
+          EOM
       - name: Export
         run: |-
           mkdir -v -p ${{ env.EXPORT_PATH }}
@@ -230,11 +230,11 @@ jobs:
       - name: Inject Git Config
         run: |-
           touch override.cfg
-          echo "
+          cat >> override.cfg << EOM
           [git]
-
-          branch=\"${{ env.BRANCH_NAME }}\"
-          commit=\"${{ github.sha }}\"" >> override.cfg"
+          branch="${{ env.BRANCH_NAME }}"
+          commit="${{ github.sha }}"
+          EOM
       - name: Export
         run: |-
           mkdir -v -p ${{ env.EXPORT_PATH }}
